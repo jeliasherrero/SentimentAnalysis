@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
-import sys,getopt,datetime,codecs
+import sys,getopt,datetime,csv
 if sys.version_info[0] < 3:
     import got
 else:
     import got3 as got
+
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 def main(argv):
 
@@ -55,24 +58,40 @@ def main(argv):
 			elif opt == '--output':
 				outputFileName = arg
 				
-		outputFile = codecs.open(outputFileName, "w+", "utf-8")
+		#outputFile = codecs.open(outputFileName, "w+", "utf-8")
+		with open(outputFileName, 'w') as csvFile:
+			fieldnames = ['username', 'date', 'retweets', 'favorites', 'text', 'geo', 'mentions', 'hashtags', 'id', 'permalink']
+			writer = csv.DictWriter(csvFile, fieldnames=fieldnames)
 
-		outputFile.write('username;date;retweets;favorites;text;geo;mentions;hashtags;id;permalink')
+			writer.writeheader()
 
-		print('Searching...\n')
+		#outputFile.write('username;date;retweets;favorites;text;geo;mentions;hashtags;id;permalink')
 
-		def receiveBuffer(tweets):
-			for t in tweets:
-				outputFile.write(('\n%s;%s;%d;%d;"%s";%s;%s;%s;"%s";%s' % (t.username, t.date.strftime("%Y-%m-%d %H:%M"), t.retweets, t.favorites, t.text, t.geo, t.mentions, t.hashtags, t.id, t.permalink)))
-			outputFile.flush()
-			print('More %d saved on file...\n' % len(tweets))
+			print('Searching...\n')
 
-		got.manager.TweetManager.getTweets(tweetCriteria, receiveBuffer)
+			def receiveBuffer(tweets):
+				for t in tweets:
+    					
+    					writer.writerow({'username': str(t.username).encode('utf-8'), 
+								'date': t.date.strftime("%Y-%m-%d %H:%M").encode('utf-8'), 
+								'retweets': str(t.retweets).encode('utf-8'), 
+								'favorites': str(t.favorites).encode('utf-8'), 
+								'text': str(t.text).encode('utf-8'), 
+								'geo': str(t.geo).encode('utf-8'), 
+								'mentions': str(t.mentions).encode('utf-8'), 
+								'hashtags': str(t.hashtags).encode('utf-8'), 
+								'id': str(t.id).encode('utf-8'), 
+								'permalink': str(t.permalink).encode('utf-8')})
+				#outputFile.write(('\n%s;%s;%d;%d;"%s";%s;%s;%s;"%s";%s' % (t.username, t.date.strftime("%Y-%m-%d %H:%M"), t.retweets, t.favorites, t.text, t.geo, t.mentions, t.hashtags, t.id, t.permalink)))
+			#outputFile.flush()
+				print('More %d saved on file...\n' % len(tweets))
+
+			got.manager.TweetManager.getTweets(tweetCriteria, receiveBuffer)
 
 	except arg:
 		print('Arguments parser error, try -h' + arg)
 	finally:
-		outputFile.close()
+		#outputFile.close()
 		print('Done. Output file generated "%s".' % outputFileName)
 
 if __name__ == '__main__':
